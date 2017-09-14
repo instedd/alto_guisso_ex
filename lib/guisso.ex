@@ -10,7 +10,8 @@ defmodule Guisso do
   def request_auth_code(conn, redirect) do
     client_id = Application.get_env(:alto_guisso, :client_id)
     redirect_uri = Application.get_env(:alto_guisso, :redirect_uri)
-    auth_url = Application.get_env(:alto_guisso, :auth_url)
+    base_url = Application.get_env(:alto_guisso, :base_url)
+    auth_url = "#{base_url}/oauth2/authorize"
     conn = set_client_state(conn, redirect)
     csrf_token = generate_csrf_token(conn)
 
@@ -29,7 +30,8 @@ defmodule Guisso do
     client_id = Application.get_env(:alto_guisso, :client_id)
     client_secret = Application.get_env(:alto_guisso, :client_secret)
     redirect_uri = Application.get_env(:alto_guisso, :redirect_uri)
-    token_url = Application.get_env(:alto_guisso, :token_url)
+    base_url = Application.get_env(:alto_guisso, :base_url)
+    token_url = "#{base_url}/oauth2/token"
     client_state = get_client_state(conn)
 
     case verify_csrf_token(state, client_state) do
