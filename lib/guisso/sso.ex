@@ -2,29 +2,27 @@ defmodule Guisso.SSO do
   use Coherence.Config
 
   defmodule Config do
-    defstruct [:enabled, :cookie_name, :session_controller]
+    defstruct [:session_controller]
   end
 
   def init(opts) do
     %Config{
-      enabled: Guisso.enabled?,
-      cookie_name: Guisso.cookie_name,
       session_controller: opts[:session_controller] || Coherence.SessionController
     }
   end
 
-  def call(conn, %Config{enabled: false}) do
-    conn
-  end
+  def call(conn, config) do
+    if Guisso.enabled? do
+      guisso_user = conn.cookies[Guisso.cookie_name] |> URI.decode_www_form
+      current_user = case Coherence.current_user(conn) do
+        nil -> nil
+        user -> user.email
+      end
 
-  def call(conn, %Config{cookie_name: cookie_name} = config) do
-    guisso_user = conn.cookies[cookie_name] |> URI.decode_www_form
-    current_user = case Coherence.current_user(conn) do
-      nil -> nil
-      user -> user.email
+      sso(conn, guisso_user, current_user, config)
+    else
+      conn
     end
-
-    sso(conn, guisso_user, current_user, config)
   end
 
   def sso(conn, nil, _, _), do: conn
