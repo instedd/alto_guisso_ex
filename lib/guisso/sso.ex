@@ -18,7 +18,7 @@ defmodule Guisso.SSO do
   end
 
   def call(conn, %Config{cookie_name: cookie_name} = config) do
-    guisso_user = conn.cookies[cookie_name]
+    guisso_user = conn.cookies[cookie_name] |> URI.decode_www_form
     current_user = case Coherence.current_user(conn) do
       nil -> nil
       user -> user.email
