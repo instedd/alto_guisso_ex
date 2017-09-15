@@ -9,7 +9,6 @@ defmodule Guisso do
 
   def request_auth_code(conn, redirect) do
     client_id = Application.get_env(:alto_guisso, :client_id)
-    redirect_uri = Application.get_env(:alto_guisso, :redirect_uri)
     base_url = Application.get_env(:alto_guisso, :base_url)
     auth_url = "#{base_url}/oauth2/authorize"
     conn = set_client_state(conn, redirect)
@@ -19,7 +18,7 @@ defmodule Guisso do
       client_id: client_id,
       response_type: "code",
       scope: "openid email",
-      redirect_uri: redirect_uri,
+      redirect_uri: redirect_uri(conn),
       state: csrf_token,
     }
 
@@ -29,18 +28,17 @@ defmodule Guisso do
   def request_auth_token(conn, %{"code" => code, "state" => state}) do
     client_id = Application.get_env(:alto_guisso, :client_id)
     client_secret = Application.get_env(:alto_guisso, :client_secret)
-    redirect_uri = Application.get_env(:alto_guisso, :redirect_uri)
     base_url = Application.get_env(:alto_guisso, :base_url)
     token_url = "#{base_url}/oauth2/token"
     client_state = get_client_state(conn)
 
-    case verify_csrf_token(state, client_state) do
+    case verify_csrf_token(conn, state) do
       :ok ->
         token_params = [
           code: code,
           client_id: client_id,
           client_secret: client_secret,
-          redirect_uri: redirect_uri,
+          redirect_uri: redirect_uri(conn),
           grant_type: "authorization_code"
         ]
 
@@ -60,6 +58,10 @@ defmodule Guisso do
     end
   end
 
+  defp redirect_uri(conn) do
+    Coherence.ControllerHelpers.router_helpers.session_url(conn, :oauth_callback)
+  end
+
   defp get_client_state(conn) do
     Plug.Conn.get_session(conn, :client_state)
   end
@@ -74,27 +76,26 @@ defmodule Guisso do
   defp generate_csrf_token(conn) do
     %{client_id: client_id} = get_client_state(conn)
     expiration = :os.system_time(:seconds) + 60 * 5
-    signature = sign_csrf_token(client_id, expiration)
+    signature = sign_csrf_token(conn, client_id, expiration)
 
     "#{client_id}///#{expiration}///#{signature}"
   end
 
-  def sign_csrf_token(client_id, expiration) do
+  def sign_csrf_token(conn, client_id, expiration) do
     data = "#{client_id}///#{expiration}"
-    secret = Application.get_env(:alto_guisso, :secret_key_base)
 
-    :crypto.hmac(:sha256, secret, data) |> Base.encode64()
+    :crypto.hmac(:sha256, conn.secret_key_base, data) |> Base.encode64()
   end
 
-  def verify_csrf_token(state, client_state) do
+  def verify_csrf_token(conn, state) do
     current_time = :os.system_time(:seconds)
-    %{client_id: expected_client_id} = client_state
+    %{client_id: expected_client_id} = get_client_state(conn)
 
     case String.split(state, "///") do
       [^expected_client_id, expiration, signature] ->
         case String.to_integer(expiration) do
           num when num > current_time ->
-            case sign_csrf_token(expected_client_id, expiration) do
+            case sign_csrf_token(conn, expected_client_id, expiration) do
               ^signature ->
                 :ok
               _ ->
