@@ -7,6 +7,12 @@ defmodule Guisso do
     Application.get_env(:alto_guisso, :cookie_name) || "guisso"
   end
 
+  def sign_out(conn, redirect_url) do
+    base_url = Application.get_env(:alto_guisso, :base_url)
+    sign_out_url = "#{base_url}/users/sign_out?#{URI.encode_query(after_sign_out_url: redirect_url)}"
+    Phoenix.Controller.redirect(conn, external: sign_out_url)
+  end
+
   def request_auth_code(conn, redirect) do
     client_id = Application.get_env(:alto_guisso, :client_id)
     base_url = Application.get_env(:alto_guisso, :base_url)
