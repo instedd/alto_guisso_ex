@@ -54,7 +54,7 @@ defmodule Guisso do
             {:ok, %{ "id_token" => id_token }} = Poison.decode(response_body)
             {:ok, token} = verify_jwt(id_token, client_secret)
 
-            {:ok, token.claims["email"], client_state[:redirect]}
+            {:ok, token.claims["email"], token.claims["name"], client_state[:redirect]}
 
           _error ->
             :error
