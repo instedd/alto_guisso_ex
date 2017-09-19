@@ -52,9 +52,9 @@ defmodule Guisso do
           {:ok, 200, _, response_ref} ->
             {:ok, response_body} = :hackney.body(response_ref)
             {:ok, %{ "id_token" => id_token }} = Poison.decode(response_body)
-            {:ok, token} = verify_jwt(id_token, client_secret)
+            {:ok, claims} = verify_jwt(id_token, client_secret)
 
-            {:ok, token.claims["email"], token.claims["name"], client_state[:redirect]}
+            {:ok, claims["email"], claims["name"], client_state[:redirect]}
 
           _error ->
             :error
@@ -126,13 +126,9 @@ defmodule Guisso do
 
     signer = sign_fn.(client_secret)
 
-    token = Joken.Signer.verify(token, signer)
-
-    case token.errors do
-      [] ->
-        { :ok, token }
-      _ ->
-        :error
+    case Joken.verify!(token, signer) do
+      {:ok, token} -> {:ok, token}
+      {:error, _error} -> :error
     end
   end
 
