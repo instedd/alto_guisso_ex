@@ -13,11 +13,22 @@ defmodule Guisso do
     Phoenix.Controller.redirect(conn, external: sign_out_url)
   end
 
-  def request_auth_code(conn, redirect) do
+  def sign_up(conn, redirect_url) do
+    conn = set_client_state(conn, redirect_url)
+    base_url = Application.get_env(:alto_guisso, :base_url)
+    sign_up_url = "#{base_url}/users/sign_up?#{URI.encode_query(redirect_url: authorize_url(conn))}"
+    Phoenix.Controller.redirect(conn, external: sign_up_url)
+  end
+
+  def request_auth_code(conn, redirect_url) do
+    conn = set_client_state(conn, redirect_url)
+    Phoenix.Controller.redirect(conn, external: authorize_url(conn))
+  end
+
+  def authorize_url(conn) do
     client_id = Application.get_env(:alto_guisso, :client_id)
     base_url = Application.get_env(:alto_guisso, :base_url)
     auth_url = "#{base_url}/oauth2/authorize"
-    conn = set_client_state(conn, redirect)
     csrf_token = generate_csrf_token(conn)
 
     auth_params = %{
@@ -28,7 +39,7 @@ defmodule Guisso do
       state: csrf_token,
     }
 
-    Phoenix.Controller.redirect(conn, external: "#{auth_url}?#{URI.encode_query(auth_params)}")
+    "#{auth_url}?#{URI.encode_query(auth_params)}"
   end
 
   def request_auth_token(conn, %{"code" => code, "state" => state}) do
