@@ -6,16 +6,20 @@ defmodule Guisso.OAuth do
   end
 
   def call(conn, _config) do
-    case get_token(conn) do
-      nil -> conn
-      bearer_token ->
-        case authenticate(bearer_token) do
-          nil -> conn
-          login ->
-            user = find_user(login)
-            conn
-            |> assign(Coherence.Config.assigns_key, user)
-        end
+    if Guisso.enabled? do
+      case get_token(conn) do
+        nil -> conn
+        bearer_token ->
+          case authenticate(bearer_token) do
+            nil -> conn
+            login ->
+              user = find_user(login)
+              conn
+              |> assign(Coherence.Config.assigns_key, user)
+          end
+      end
+    else
+      conn
     end
   end
 
