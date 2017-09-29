@@ -14,6 +14,7 @@ defmodule AltoGuisso.Mixfile do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
+      mod: {Guisso, []},
       extra_applications: [:logger]
     ]
   end
@@ -22,7 +23,9 @@ defmodule AltoGuisso.Mixfile do
   defp deps do
     [
       {:hackney, "~> 1.0"},
-      {:joken, "~> 1.4.1"}
+      {:joken, "~> 1.4.1"},
+      {:httpoison, "~> 0.11.0"},
+      {:cachex, "~> 2.1"}
     ]
   end
 end

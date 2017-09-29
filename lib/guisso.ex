@@ -1,4 +1,16 @@
 defmodule Guisso do
+  use Application
+
+  def start(_type, _args) do
+    import Supervisor.Spec
+
+    children = [
+      worker(Guisso.TokenServer, [])
+    ]
+    opts = [strategy: :one_for_one, name: Guisso.Supervisor]
+    Supervisor.start_link(children, opts)
+  end
+
   def enabled? do
     Application.get_env(:alto_guisso, :enabled) == true
   end
