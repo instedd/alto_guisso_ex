@@ -1,0 +1,24 @@
+version: '2'
+volumes:
+  deps:
+  build:
+
+services:
+  db:
+    image: postgres:9.6.4
+    environment:
+      POSTGRES_PASSWORD: postgres
+
+  wrk:
+    build:
+      context: ./
+      dockerfile: Dockerfile.dev
+    volumes:
+      - .:/wrk
+      - deps:/wrk/deps
+      - build:/wrk/_build
+    working_dir: /wrk
+    environment:
+      DATABASE_HOST: db
+    depends_on:
+      - db

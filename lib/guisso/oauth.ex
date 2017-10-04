@@ -6,21 +6,20 @@ defmodule Guisso.OAuth do
   end
 
   def call(conn, _config) do
-    if Guisso.enabled? do
-      case get_token(conn) do
-        nil -> conn
-        bearer_token ->
-          case authenticate(bearer_token) do
-            nil -> conn
-            login ->
-              user = find_user(login)
-              conn
-              |> assign(Coherence.Config.assigns_key, user)
-          end
-      end
-    else
+    with {:ok, token_type, token_id} <- find_token_id(conn),
+         {:ok, conn, token} <- find_token(conn, token_type, token_id),
+         {:ok, conn} <- authenticate(conn, token)
+    do
       conn
+    else
+      {:cancel, conn} -> conn
     end
+  end
+
+  defp authenticate(conn, %{"user" => login}) do
+    user = find_user(login)
+    conn = assign(conn, Coherence.Config.assigns_key, user)
+    {:ok, conn}
   end
 
   defp find_user(login) do
@@ -29,26 +28,26 @@ defmodule Guisso.OAuth do
     Coherence.Config.repo.one(from u in user_schema, where: field(u, ^login_field) == ^login)
   end
 
-  defp authenticate(bearer_token) do
-    case Guisso.TokenServer.get_token(bearer_token) do
-      {:ok, %{"token_type" => "bearer", "user" => user}} ->
-        user
+  defp find_token(conn, token_type, token_id) do
+    case Guisso.TokenServer.get_token(token_id) do
+      {:ok, %{"token_type" => ^token_type} = token} ->
+        {:ok, assign(conn, :guisso_token, token), token}
 
       {:ok, _} ->
-        # The token was found but it's not a Bearer token
-        nil
+        # The token was found but it's not of the right type
+        {:cancel, conn}
 
       :not_found ->
         # The token is invalid
-        nil
+        {:cancel, conn}
 
       {:error, reason} ->
         raise "Could not get token from Guisso server (reason: #{inspect reason})"
     end
   end
 
-  defp get_token(conn) do
-    get_header_token(conn) || get_params_token(conn)
+  defp find_token_id(conn) do
+    get_header_token(conn) || get_params_token(conn) || {:cancel, conn}
   end
 
   defp get_header_token(conn) do
@@ -60,14 +59,14 @@ defmodule Guisso.OAuth do
   defp find_header_token([]), do: nil
   defp find_header_token([auth_header | other]) do
     case auth_header do
-      "Bearer " <> bearer_token -> bearer_token
+      "Bearer " <> bearer_token -> {:ok, "bearer", bearer_token}
       _ -> find_header_token(other)
     end
   end
 
   defp get_params_token(conn) do
     case conn.params do
-      %{"access_token" => bearer_token} -> bearer_token
+      %{"access_token" => bearer_token} -> {:ok, "bearer", bearer_token}
       _ -> nil
     end
   end

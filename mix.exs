@@ -22,10 +22,13 @@ defmodule AltoGuisso.Mixfile do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
+      {:coherence, "~> 0.3"},
       {:hackney, "~> 1.0"},
-      {:joken, "~> 1.4.1"},
-      {:httpoison, "~> 0.11.0"},
-      {:cachex, "~> 2.1"}
+      {:joken, "~> 1.4"},
+      {:httpoison, "~> 0.11"},
+      {:cachex, "~> 2.1"},
+      {:mock, "~> 0.3.1", only: :test},
+      {:postgrex, ">= 0.0.0", only: :test}
     ]
   end
 end
