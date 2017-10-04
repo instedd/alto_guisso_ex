@@ -8,6 +8,7 @@ defmodule Guisso.OAuth do
   def call(conn, _config) do
     with {:ok, token_type, token_id} <- find_token_id(conn),
          {:ok, conn, token} <- find_token(conn, token_type, token_id),
+         {:ok, conn} <- validate_scope(conn, token),
          {:ok, conn} <- authenticate(conn, token)
     do
       conn
@@ -70,4 +71,39 @@ defmodule Guisso.OAuth do
       _ -> nil
     end
   end
+
+  defp validate_scope(conn, %{"scope" => scope}) do
+    scopes = scope |> String.split(" ", trim: true)
+    validate_scope_elements(conn, scopes)
+  end
+
+  defp validate_scope(conn, _token) do
+    {:ok, conn}
+  end
+
+  defp validate_scope_elements(conn, []), do: {:ok, conn}
+
+  defp validate_scope_elements(conn, [scope | scopes]) do
+    case String.split(scope, "=", parts: 2) do
+      [_] -> validate_scope_elements(conn, scopes)
+      [key, value] ->
+        case validate_scope_element(conn, key, value) do
+          {:ok, conn} -> validate_scope_elements(conn, scopes)
+          other -> other
+        end
+    end
+  end
+
+  defp validate_scope_element(conn, "url:path", path) do
+    if conn.request_path == path do
+      {:ok, conn}
+    else
+      conn = conn
+        |> put_status(:forbidden)
+        |> halt
+      {:cancel, conn}
+    end
+  end
+
+  defp validate_scope_element(conn, _, _), do: {:ok, conn}
 end
