@@ -1,0 +1,30 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: elixir:1.5.0
+      - image: postgres:9.6.4
+    steps:
+      - checkout
+      - run:
+          name: Install hex
+          command: mix local.hex --force
+      - run:
+          name: Install rebar
+          command: mix local.rebar --force
+      - restore_cache:
+          key: dependency-cache-{{ checksum "mix.lock" }}
+      - run:
+          name: Install dependencies
+          command: mix deps.get
+      - run:
+          name: Build dependencies
+          command: MIX_ENV=test mix deps.compile
+      - save_cache:
+          key: dependency-cache-{{ checksum "mix.lock" }}
+          paths:
+            - deps
+            - _build
+      - run:
+          name: Run tests
+          command: mix test
