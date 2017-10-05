@@ -28,3 +28,5 @@ jobs:
       - run:
           name: Run tests
           command: mix test
+      - store_test_results:
+          path: ~/project/_build/test/lib/alto_guisso

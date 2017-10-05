@@ -28,7 +28,8 @@ defmodule AltoGuisso.Mixfile do
       {:httpoison, "~> 0.11"},
       {:cachex, "~> 2.1"},
       {:mock, "~> 0.3.1", only: :test},
-      {:postgrex, ">= 0.0.0", only: :test}
+      {:postgrex, ">= 0.0.0", only: :test},
+      {:junit_formatter, "~> 2.0", only: :test}
     ]
   end
 end
