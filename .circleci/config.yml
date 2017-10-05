@@ -18,8 +18,8 @@ jobs:
           name: Install dependencies
           command: mix deps.get
       - run:
-          name: Build dependencies
-          command: MIX_ENV=test mix deps.compile
+          name: Build
+          command: MIX_ENV=test mix compile
       - save_cache:
           key: dependency-cache-{{ checksum "mix.lock" }}
           paths:
