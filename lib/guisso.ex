@@ -74,7 +74,7 @@ defmodule Guisso do
         case :hackney.post(token_url, [], {:form, token_params}) do
           {:ok, 200, _, response_ref} ->
             {:ok, response_body} = :hackney.body(response_ref)
-            {:ok, %{ "id_token" => id_token }} = Poison.decode(response_body)
+            {:ok, %{ "id_token" => id_token }} = Jason.decode(response_body)
             {:ok, claims} = verify_jwt(id_token, client_secret)
 
             {:ok, claims["email"], claims["name"], client_state[:redirect]}
@@ -88,7 +88,7 @@ defmodule Guisso do
   end
 
   defp redirect_uri(conn) do
-    Coherence.ControllerHelpers.router_helpers.session_url(conn, :oauth_callback)
+    Coherence.Controller.router_helpers.session_url(conn, :oauth_callback)
   end
 
   defp get_client_state(conn) do

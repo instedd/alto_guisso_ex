@@ -4,6 +4,9 @@ use Mix.Config
 
 config :logger, level: :error
 
+config :phoenix,
+  :json_library, Jason
+
 config :alto_guisso,
   enabled: true,
   base_url: "https://alto.guisso"
