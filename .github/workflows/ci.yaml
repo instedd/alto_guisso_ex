@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - "**"
+
+  pull_request:
+    branches:
+      - "**:**"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    # Avoid duplicating test runs:
+    # - always test on push (to a branch in this repo)
+    # - test pull requests from *external* repositories only
+    if: (github.event_name == 'push') || (github.event.pull_request.head.repo.full_name != github.repository)
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set environment up
+        run: |
+          docker-compose build
+          docker-compose run --rm wrk mix do deps.get, deps.compile
+
+      - name: Run specs
+        run: |
+          docker-compose run --rm wrk mix test
