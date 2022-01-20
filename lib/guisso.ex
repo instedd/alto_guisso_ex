@@ -1,5 +1,20 @@
+# This behaviour only exists so we can mock Guisso during tests.
+defmodule Guisso.Client do
+  @callback enabled?() :: Bool.t()
+  @callback cookie_name :: String.t()
+  @callback sign_out(conn :: Plug.Conn.t(), redirect_url :: String.t()) :: Plug.Conn.t()
+  @callback sign_up(conn :: Plug.Conn.t(), redirect_url :: String.t()) :: Plug.Conn.t()
+  @callback request_auth_code(conn :: Plug.Conn.t(), redirect_url :: String.t()) :: Plug.Conn.t()
+  @callback authorize_url(conn :: Plug.Conn.t()) :: Plug.Conn.t()
+  @callback request_auth_token(conn :: Plug.Conn.t(), _ :: map()) :: {:ok, String.t(), String.t(), String.t()} | {:error, term()}
+  @callback sign_csrf_token(conn :: Plug.Conn.t(), client_id :: String.t(), expiration :: term()) :: String.t()
+  @callback verify_csrf_token(conn :: Plug.Conn.t(), state :: String.t()) :: :ok | {:error, String.t()}
+end
+
 defmodule Guisso do
   use Application
+
+  @behaviour Guisso.Client
 
   def start(_type, _args) do
     import Supervisor.Spec
