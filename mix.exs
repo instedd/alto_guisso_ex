@@ -22,7 +22,7 @@ defmodule AltoGuisso.Mixfile do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:coherence, "~> 0.3"},
+      {:coherence, "~> 0.5"},
       {:hackney, "~> 1.0"},
       {:joken, "~> 1.4"},
       {:httpoison, "~> 0.11"},

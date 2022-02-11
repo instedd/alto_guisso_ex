@@ -1,6 +1,6 @@
 defmodule GuissoTest do
   use ExUnit.Case
-  use Phoenix.ConnTest
+  import Phoenix.ConnTest
 
   test "enabled must be true" do
     assert Guisso.enabled? == true

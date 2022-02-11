@@ -41,7 +41,7 @@ defmodule Guisso.TokenServer do
 
     case HTTPoison.get(url) do
       {:ok, %{status_code: 200, body: body}} ->
-        {:ok, token} = Poison.decode(body)
+        {:ok, token} = Jason.decode(body)
         {:commit, token}
 
       {:ok, %{status_code: 403}} ->
